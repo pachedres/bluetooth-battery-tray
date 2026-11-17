@@ -42,7 +42,7 @@ jobs:
             Compress-Archive -Path "out/$kind/*" -DestinationPath "BluetoothBatteryTray-$v-win-x64-$kind.zip"
           }
 
-      - uses: actions/upload-artifact@v5
+      - uses: actions/upload-artifact@v6
         with:
           name: BluetoothBatteryTray-${{ steps.version.outputs.value }}
           path: '*.zip'
