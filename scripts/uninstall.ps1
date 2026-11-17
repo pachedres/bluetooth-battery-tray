@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    Removes Bluetooth Battery Tray (program files, Start menu shortcut and auto start entry).
+    Removes Bluetooth Battery Tray (program files, Start menu shortcut and auto start task).
     Settings in %AppData%\BluetoothBatteryTray are kept unless -RemoveSettings is passed.
 
     Usage:
@@ -17,6 +17,7 @@ $Shortcut   = Join-Path $env:ProgramData "Microsoft\Windows\Start Menu\Programs\
 
 # Per-user items first (before elevating, so HKCU/AppData are the real user's).
 Remove-ItemProperty -Path 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Run' -Name $AppName -ErrorAction SilentlyContinue
+schtasks.exe /Delete /TN $AppName /F 2>$null | Out-Null
 if ($RemoveSettings) {
     Remove-Item (Join-Path $env:APPDATA $AppName) -Recurse -Force -ErrorAction SilentlyContinue
 }

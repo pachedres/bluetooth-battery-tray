@@ -31,6 +31,9 @@ public partial class App : Application
         base.OnStartup(e);
         Log.Info($"Starting v{typeof(App).Assembly.GetName().Version}");
 
+        try { AutoStart.MigrateLegacyRunEntry(); }
+        catch (Exception ex) { Log.Error("Auto start migration failed", ex); }
+
         MainWindow = new OverlayWindow();
         MainWindow.Show();
     }
