@@ -1,0 +1,11 @@
+bin/
+obj/
+publish/
+artifacts/
+.vs/
+*.user
+*.suo
+*.swp
+.idea/
+.DS_Store
+Thumbs.db

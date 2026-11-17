@@ -1,0 +1,24 @@
+<Window x:Class="BluetoothBatteryTray.OverlayWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Bluetooth Battery Tray"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        ResizeMode="NoResize"
+        ShowInTaskbar="False"
+        ShowActivated="False"
+        Topmost="True"
+        SizeToContent="Width"
+        Height="48"
+        Left="-32000"
+        Top="-32000"
+        UseLayoutRounding="True"
+        SnapsToDevicePixels="True"
+        FontFamily="Segoe UI Variable Text, Segoe UI"
+        FontSize="12">
+    <!-- Almost-transparent background so the whole strip receives mouse clicks. -->
+    <Border Background="#01000000" Padding="2,4">
+        <StackPanel x:Name="Items" Orientation="Horizontal" />
+    </Border>
+</Window>
