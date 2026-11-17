@@ -7,7 +7,7 @@ namespace BluetoothBatteryTray.Services;
 
 public enum DeviceKind { Generic, Headphones, Headset, Speaker, Mouse, Keyboard, Gamepad, Phone, Watch }
 
-public sealed record DeviceBattery(string Id, string Name, DeviceKind Kind, int? Percent);
+public sealed record DeviceBattery(string Id, string Name, DeviceKind Kind, int? Percent, bool IsCharging = false);
 
 /// <summary>
 /// Reads battery levels of connected Bluetooth devices.

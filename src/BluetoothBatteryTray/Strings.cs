@@ -17,6 +17,7 @@ internal static class L
     public static string Next => Pt ? "Próxima" : "Next";
     public static string Previous => Pt ? "Anterior" : "Previous";
     public static string Paused => Pt ? "Pausado" : "Paused";
+    public static string Charging => Pt ? "carregando" : "charging";
     public static string NoDevices => Pt
         ? "Nenhum dispositivo Bluetooth com bateria conectado"
         : "No connected Bluetooth device is reporting battery";

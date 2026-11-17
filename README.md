@@ -34,6 +34,8 @@ powershell -ExecutionPolicy Bypass -File install.ps1
 - Battery level of Bluetooth headphones, headsets, mice, keyboards, gamepads...
   - Classic Bluetooth devices: same value Windows shows in *Settings › Bluetooth & devices*
   - Bluetooth LE devices: also reads the standard GATT Battery Service
+- 2.4 GHz wireless receivers (USB dongles), including charging state: currently the **Attack Shark X11**
+  (see [Adding a 2.4 GHz receiver](#adding-a-24-ghz-receiver))
 - Updates immediately when a device connects/disconnects, and polls the level every 60 s
 - Low battery (≤ 20 %) shown in red
 - Now playing: uses Windows media controls, so **no Spotify login or API key** is needed.
@@ -90,7 +92,7 @@ Logs: `%AppData%\BluetoothBatteryTray\log.txt`.
 
 ## Limitations
 
-- Devices connected through a proprietary USB dongle (e.g. Logitech Unifying/Bolt) don't expose battery to Windows over Bluetooth and can't be read.
+- Devices connected through a proprietary USB dongle use a different protocol per brand/model, so each one has to be added individually (only the Attack Shark X11 so far).
 - Some devices simply don't report battery level to Windows.
 - Windows 11 no longer allows real taskbar extensions, so this is an always-on-top window positioned over the taskbar (same technique used by other taskbar monitors). Only horizontal taskbars on the primary monitor are supported.
 
@@ -103,6 +105,21 @@ Logs: `%AppData%\BluetoothBatteryTray\log.txt`.
 | Battery (LE) | GATT Battery Service `0x180F` / Battery Level `0x2A19` |
 | Now playing | `GlobalSystemMediaTransportControlsSessionManager` |
 | Position | `Shell_TrayWnd` / `TrayNotifyWnd` window rectangles |
+
+## Adding a 2.4 GHz receiver
+
+Mice and keyboards with their own USB receiver don't report battery to Windows; only the vendor software knows how to ask.
+Many receivers, however, broadcast a status report on their own, which this app can listen to (it never sends commands).
+
+1. Find the receiver's vendor/product id (Device Manager › the device › Details › Hardware Ids, e.g. `VID_1D57&PID_FA60`).
+2. Run the read-only probe while moving the mouse and, if available, with the vendor software open on its battery screen:
+   ```powershell
+   powershell -ExecutionPolicy Bypass -File tools\hid-probe.ps1 -Filter "vid_1d57&pid_fa60" -ListenSeconds 40
+   ```
+3. Look for a report that repeats periodically and contains the battery percentage (e.g. `0x64` = 100), then compare with
+   the vendor software at a different charge level.
+4. Add the model to `Models` in [ReceiverBatteryService.cs](src/BluetoothBatteryTray/Services/ReceiverBatteryService.cs) and open a pull request,
+   or open an issue with the probe output (`hid-probe-result.txt`).
 
 ## Releasing
 

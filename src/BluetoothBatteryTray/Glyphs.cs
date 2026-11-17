@@ -16,6 +16,7 @@ internal static class Glyphs
     public const string Watch = "";
     public const string Music = "";
     public const string Pause = "";
+    public const string Charging = "";
 
     public static string For(DeviceKind kind) => kind switch
     {

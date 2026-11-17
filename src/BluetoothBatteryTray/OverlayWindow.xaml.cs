@@ -20,6 +20,7 @@ public partial class OverlayWindow : Window
     private static readonly FontFamily IconFont = new("Segoe Fluent Icons, Segoe MDL2 Assets");
 
     private readonly BluetoothBatteryService _battery = new();
+    private ReceiverBatteryService? _receivers;
     private readonly MediaService _media = new();
     private readonly DispatcherTimer _positionTimer;
     private readonly DispatcherTimer _refreshTimer;
@@ -93,6 +94,13 @@ public partial class OverlayWindow : Window
         try { _battery.StartWatching(); }
         catch (Exception ex) { Log.Error("Could not start device watcher", ex); }
 
+        try
+        {
+            _receivers = new ReceiverBatteryService();
+            _receivers.Changed += () => Dispatcher.InvokeAsync(() => Restart(_deviceDebounce));
+        }
+        catch (Exception ex) { Log.Error("Could not start 2.4 GHz receiver support", ex); }
+
         await RefreshDevicesAsync();
     }
 
@@ -107,9 +115,12 @@ public partial class OverlayWindow : Window
             do
             {
                 _refreshPending = false;
-                var all = await _battery.GetConnectedDevicesAsync();
+                var all = (await _battery.GetConnectedDevicesAsync())
+                    .Concat(_receivers?.GetDevices() ?? [])
+                    .ToList();
 
-                var summary = string.Join(", ", all.Select(d => $"{d.Name} [{d.Kind}] {d.Percent?.ToString() ?? "n/a"}"));
+                var summary = string.Join(", ", all.Select(d =>
+                    $"{d.Name} [{d.Kind}] {d.Percent?.ToString() ?? "n/a"}{(d.IsCharging ? " charging" : "")}"));
                 if (summary != _lastLoggedDevices)
                 {
                     Log.Info($"Devices: {(summary.Length == 0 ? "(none)" : summary)}");
@@ -190,8 +201,9 @@ public partial class OverlayWindow : Window
         foreach (var device in _devices)
         {
             var text = device.Percent is int p ? $"{p}%" : "—";
-            var isLow = device.Percent is int pct && pct <= _settings.LowBatteryThreshold;
-            Items.Children.Add(CreateItem(Glyphs.For(device.Kind), text, $"{device.Name}: {text}", isLow ? lowBrush : null));
+            var isLow = device.Percent is int pct && pct <= _settings.LowBatteryThreshold && !device.IsCharging;
+            var tooltip = $"{device.Name}: {text}" + (device.IsCharging ? $" ({L.Charging})" : "");
+            Items.Children.Add(CreateItem(Glyphs.For(device.Kind), text, tooltip, isLow ? lowBrush : null, device.IsCharging));
         }
 
         if (_settings.ShowMedia && _nowPlaying is { } np && (np.IsPlaying || !_settings.HideMediaWhenPaused))
@@ -213,7 +225,7 @@ public partial class OverlayWindow : Window
         }
     }
 
-    private Border CreateItem(string glyph, string text, string tooltip, Brush? textBrush)
+    private Border CreateItem(string glyph, string text, string tooltip, Brush? textBrush, bool charging = false)
     {
         var panel = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center };
         panel.Children.Add(new TextBlock
@@ -233,6 +245,17 @@ public partial class OverlayWindow : Window
             };
             if (textBrush is not null) label.Foreground = textBrush;
             panel.Children.Add(label);
+        }
+        if (charging)
+        {
+            panel.Children.Add(new TextBlock
+            {
+                Text = Glyphs.Charging,
+                FontFamily = IconFont,
+                FontSize = 11,
+                Margin = new Thickness(3, 0, 0, 0),
+                VerticalAlignment = VerticalAlignment.Center,
+            });
         }
 
         var hover = new SolidColorBrush(_lightTheme ? Color.FromArgb(0x14, 0, 0, 0) : Color.FromArgb(0x1A, 0xFF, 0xFF, 0xFF));
@@ -368,6 +391,7 @@ public partial class OverlayWindow : Window
         if (_foregroundHook != IntPtr.Zero) UnhookWinEvent(_foregroundHook);
         _settingsWatcher?.Dispose();
         _battery.Dispose();
+        _receivers?.Dispose();
         _media.Dispose();
     }
 }
